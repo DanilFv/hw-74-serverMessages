@@ -1,10 +1,28 @@
 import express, {Request, Response} from 'express';
 import {promises as fs} from 'fs';
+import {IMessage} from './types';
 
 const messagesRouter = express.Router();
 
-messagesRouter.get('/', (req: Request, res: Response) => {
-   res.send('hello world');
+
+messagesRouter.get('/', async (req: Request, res: Response) => {
+   try {
+       const path = './messages';
+       const files = await fs.readdir(path);
+       const messages: IMessage[] = await Promise.all(
+           files.map(async file => {
+               const content = await fs.readFile(`${path}/${file}`, 'utf-8');
+               return JSON.parse(content);
+           })
+       );
+
+       const sortedMessages = messages.slice(-5);
+
+       res.send(sortedMessages);
+
+   } catch (e) {
+       console.error(e);
+   }
 });
 
 messagesRouter.post('/', async (req: Request, res: Response) => {
@@ -14,18 +32,17 @@ messagesRouter.post('/', async (req: Request, res: Response) => {
         }
 
         const datetime = new Date().toISOString();
-        const newMessage = {
+        const newMessage: IMessage = {
             message: req.body.message,
             datetime: datetime,
         };
 
         const fileName = datetime.replace(/:/g, '-');
-
         await fs.writeFile(`./messages/${fileName}.txt`, JSON.stringify(newMessage));
 
         res.send(newMessage);
     } catch (e) {
-        console.error("Ошибка при записи:", e);
+        console.error("Error", e);
         res.status(500).send({ error: "Internal Server Error" });
     }
 });
