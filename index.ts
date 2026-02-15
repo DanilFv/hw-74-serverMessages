@@ -1,11 +1,11 @@
-import express, {Request, Response} from 'express';
+import express from 'express';
+import messagesRouter from './routes/messages';
 
 const app = express();
 const port = 8000;
 
-app.get("/", (req: Request, res: Response) => {
-    res.send("Hello");
-});
+app.use(express.json());
+app.use('/messages', messagesRouter);
 
 app.listen(port, () => {
     console.log(`Server is running on port: ${port}`);
